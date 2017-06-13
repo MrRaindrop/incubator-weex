@@ -17,6 +17,7 @@
  * under the License.
  */
 import { camelToKebab, appendCss, isArray } from '../utils'
+import config from '../config'
 
 function getParentScroller (vnode) {
   if (!vnode) return null
@@ -25,7 +26,7 @@ function getParentScroller (vnode) {
     ? vnode.componentInstance || vnode.context : null
   if (!vm) return null
   const type = vm.$el && vm.$el.getAttribute('weex-type')
-  if (type === 'scroller' || type === 'list') {
+  if (config.scrollableTypes.indexOf(type) > -1) {
     return vm
   }
   return getParentScroller(vm.$parent)
