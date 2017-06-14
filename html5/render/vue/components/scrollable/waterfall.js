@@ -141,7 +141,7 @@ export default {
       const el = this.$el
       function getCtWidth (width, style) {
         const padding = style.padding
-          ? parseInt(style.padding)
+          ? parseInt(style.padding) * 2
           : parseInt(style.paddingLeft || 0) + parseInt(style.paddingRight || 0)
         return width - padding
       }
