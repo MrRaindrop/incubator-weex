@@ -166,15 +166,17 @@ export function getHeadStyleMap () {
 //   return arr
 // }
 
-export function getScopeId (vnode) {
-  return vnode.context.$options._scopeId
+export function getScopeId (vnode, functional) {
+  return functional
+    ? vnode.parent.$options._scopeId
+    : vnode.context.$options._scopeId
 }
 
 /**
  * get style in <style scoped> tags for this component.
  */
-export function getScopeStyle (vnode, classNames) {
-  const scopeId = getScopeId(vnode)
+export function getScopeStyle (vnode, classNames, functional) {
+  const scopeId = getScopeId(vnode, functional)
   const style = {}
   const styleMap = weex._styleMap || {}
   let clsNmsIdx = 0
@@ -188,12 +190,12 @@ export function getScopeStyle (vnode, classNames) {
   return camelizeKeys(style)
 }
 
-function getStyle (vnode, extract) {
+function getStyle (vnode, extract, functional) {
   const data = vnode.data || {}
   const staticClassNames = (typeof data.staticClass === 'string') ? data.staticClass.split(' ') : (data.staticClass || [])
   const classNames = (typeof data.class === 'string') ? data.class.split(' ') : (data.class || [])
   const clsNms = staticClassNames.concat(classNames)
-  const style = normalizeStyle(getScopeStyle(vnode, clsNms))
+  const style = normalizeStyle(getScopeStyle(vnode, clsNms, functional))
   /**
    * cache static style and bind style.
    * cached staticStyle (including style and staticStyle) has already been normalized
@@ -218,20 +220,23 @@ function getStyle (vnode, extract) {
  * get style merged with static styles, binding styles, and scoped class styles,
  * with keys in camelcase.
  */
-export function getComponentStyle (context, extract) {
-  if (!context.$vnode) {
-    if (process.env.NODE_ENV === 'development') {
-      return console.error('[vue-render] getComponentStyle failed: no $vnode in context.')
-    }
-    return {}
-  }
+export function getComponentStyle (context, extract, options) {
   let style = {}
-  let vnode = context.$vnode
+  const { functional, id } = options || {}
+  let vnode = functional ? context : context.$vnode
+  const vm = functional ? context.parent : context
+  extend(style, getStyle(vnode, extract, functional))
+  vnode = functional ? vnode.parent.$vnode : vnode.parent
   while (vnode) {
     extend(style, getStyle(vnode, extract))
     vnode = vnode.parent
   }
   style = autoPrefix(style)
+
+  function getEl (context, id) {
+    return context.$el || id && document.querySelector(`[data-weex-id="${id}"]`)
+  }
+
   /**
    * when prefixed value is a array, it should be applied to element
    * during the next tick.
@@ -248,8 +253,8 @@ export function getComponentStyle (context, extract) {
   for (const k in style) {
     if (Array.isArray(style[k])) {
       const vals = style[k]
-      context.$nextTick(function () {
-        const el = context.$el
+      vm.$nextTick(function () {
+        const el = getEl(context, id)
         if (el) {
           for (let i = 0; i < vals.length; i++) {
             el.style[k] = vals[i]
@@ -266,8 +271,8 @@ export function getComponentStyle (context, extract) {
   const pos = style.position
   const reg = /sticky$/
   if (pos === 'fixed') {
-    context.$nextTick(function () {
-      const el = context.$el
+    vm.$nextTick(function () {
+      const el = getEl(context, id)
       if (el) {
         el.classList.add('weex-fixed')
       }
@@ -277,8 +282,8 @@ export function getComponentStyle (context, extract) {
     delete style.position
     // use native sticky.
     if (supportSticky()) {
-      context.$nextTick(function () {
-        const el = context.$el
+      vm.$nextTick(function () {
+        const el = getEl(context, id)
         if (el) {
           el.classList.add('weex-ios-sticky')
         }
@@ -295,8 +300,8 @@ export function getComponentStyle (context, extract) {
         }
         scroller._stickyChildren[uid] = context
       }
-      context.$nextTick(function () {
-        const el = context.$el
+      vm.$nextTick(function () {
+        const el = getEl(context, id)
         if (el) {
           context._initOffsetTop = el.offsetTop
         }
@@ -307,7 +312,6 @@ export function getComponentStyle (context, extract) {
   return style
 }
 
-export function extractComponentStyle (context) {
-  return getComponentStyle(context, true)
+export function extractComponentStyle (context, options) {
+  return getComponentStyle(context, true, options)
 }
-

@@ -23,6 +23,9 @@ body > .weex-div {
 }
 `
 
+let idCount = 0
+const functional = true
+
 function getDiv (weex) {
   const {
     extractComponentStyle,
@@ -31,14 +34,19 @@ function getDiv (weex) {
   } = weex
 
   return {
+    functional,
     name: 'weex-div',
-    render (createElement) {
+    render (createElement, context) {
+      const id = `wx-div-${idCount++}`
       return createElement('html:div', {
-        attrs: { 'weex-type': 'div' },
-        on: createEventMap(this),
+        attrs: {
+          'weex-type': 'div',
+          'data-weex-id': id
+        },
+        on: createEventMap(context),
         staticClass: 'weex-div weex-ct',
-        staticStyle: extractComponentStyle(this)
-      }, trimTextVNodes(this.$slots.default))
+        staticStyle: extractComponentStyle(context, { functional, id })
+      }, trimTextVNodes(context.children))
     },
     _css
   }
