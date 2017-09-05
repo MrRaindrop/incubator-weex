@@ -71,11 +71,23 @@ if (unFlowedFiles.length > 0) {
 
 // Error or Warn when delete public interface
 var isNotDanger = false;
-for (let c of danger.git.commits) {
-  // console.log("msg:" + c.message);
-  if (c.message && c.message.match(/@notdanger/i)) {
-    isNotDanger = true;
-    break;
+console.log('pr.title:'+danger.github.pr.title)
+if(!isNotDanger && danger.github.pr.title 
+  && danger.github.pr.title.match(/@notdanger/i)){
+  isNotDanger = true;
+}
+console.log('pr.body:'+danger.github.pr.body)
+if(!isNotDanger && danger.github.pr.body 
+  && danger.github.pr.body.match(/@notdanger/i)){
+  isNotDanger = true;
+}
+if(!isNotDanger){
+  for (let c of danger.git.commits) {
+    // console.log("msg:" + c.message);
+    if (c.message && c.message.match(/@notdanger/i)) {
+      isNotDanger = true;
+      break;
+    }
   }
 }
 
@@ -213,7 +225,7 @@ if (danger.git.deleted_files) {
 
 if (has_sdk_changes && !has_test_changes) {
   if(isNotDanger) warn("This PR modify SDK code without add/modify testcases.")
-  else fail("This PR modify SDK code. Please add/modify corresponding testcases. If it is ok, please comment about it. Or put '@notdanger' in you commit message.");
+  // else fail("This PR modify SDK code. Please add/modify corresponding testcases. If it is ok, please comment about it. Or put '@notdanger' in you commit message.");
 }
 
 if (has_sdk_changes && !has_doc_changes) {
@@ -236,7 +248,9 @@ const copyright_header_components = [
 //path prefix
 const ignoreCopyrightVerifyPath = [
   'test',
+  'packages',
   'pre-build',
+  'html5/test/case',
   'android/playground/app/src/main/assets',
   'android/sdk/assets',
   'ios/playground/bundlejs',
@@ -366,7 +380,7 @@ function parseDeleteAndNormalLines(diffData, fileToDeletedLinesMap, fileToNormal
           }
         })
       })
-    }) 
+    })
   } catch (error) {
     console.log(error)
   }
@@ -428,7 +442,7 @@ function findBlameReviewers(fileToDeletedLinesMap, fileToNormalLinesMap, fileToB
   console.log('blame point:', reviewers)
   var names = Object.keys(reviewers)
   names.sort((name1, name2) => {
-    return reviewers[name1] > reviewers[name2] ? -1 : 1 
+    return reviewers[name1] > reviewers[name2] ? -1 : 1
   })
 
   var prUser = danger.github.pr.user.login

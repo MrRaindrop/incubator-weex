@@ -20,7 +20,6 @@
 
 import { init } from '../helper/runtime'
 import div from '../../../../render/vue/components/div'
-
 import eventBubbleBundle from '../data/build/dotvue/event-bubble.js'
 
 init('core node', (Vue, helper) => {
@@ -50,6 +49,7 @@ init('core node', (Vue, helper) => {
        *  e.g.  div -> foo (whoes root element is the div.)
        */
       const evt = new Event('tap', { bubbles: true })
+      evt._for = 'weex'
       el.dispatchEvent(evt)
 
       helper.registerDone(id, (tracker) => {
@@ -65,6 +65,7 @@ init('core node', (Vue, helper) => {
        * shouldn't bubbe to outter div.
        */
       const evt = new Event('tap', { bubbles: false })
+      evt._for = 'weex'
       inner.dispatchEvent(evt)
 
       helper.registerDone(id, (tracker) => {
