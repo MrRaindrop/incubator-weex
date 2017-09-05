@@ -17,44 +17,20 @@
  * under the License.
  */
 
-const _css = `
-body > .weex-div {
-  min-height: 100%;
-}
-`
-
-let idCount = 0
-const functional = true
-
-function getDiv (weex) {
-  const {
-    extractComponentStyle,
-    trimTextVNodes
-  } = weex
-
-  return {
-    functional,
-    name: 'weex-div',
-    render (createElement, context) {
-      const id = `wx-div-${idCount++}`
-      return createElement('html:div', {
-        attrs: {
-          'weex-type': 'div',
-          'data-weex-id': id
-        },
-        on: createEventMap(context),
-        staticClass: 'weex-div weex-ct',
-        staticStyle: extractComponentStyle(context, { functional, id })
-      }, trimTextVNodes(context.children))
-    },
-    _css
+const meta = {
+  /**
+   * setViewport
+   * Changing viewport width at runtime is not supported. Please use weex-viewport meta
+   * tag to specify your viewport in your html file.
+   */
+  setViewport (options) {
+    console.warn(`[vue-render] meta.setViewport doesn't works as expected in web platform.`
+    + ` Please use <meta name="weex-viewport" content="xxx"> to specify your viewport width.`)
   }
 }
 
 export default {
   init (weex) {
-    const div = getDiv(weex)
-    weex.registerComponent('div', div)
-    weex.registerComponent('container', div)
+    weex.registerModule('meta', meta)
   }
 }

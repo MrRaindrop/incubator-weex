@@ -138,6 +138,15 @@ vue: {
 * fix `modal.toast` on android.
 * fix css prefixer for gradients.
 
+#### 0.12.4
+
+* fix scanning style in production with uglified code.
+
+#### 0.12.8
+
+* optimize event binding.
+* fix a-jump interception condition.
+
 ## component -> dom map
 
 | component | dom element | children | note |
