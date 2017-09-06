@@ -135,7 +135,7 @@ function _init (doc) {
             // do nothing. leave it to the intercept handler.
           }
           else {
-            if (!!href) {
+            if (href) {
               location.href = href
             }
             else {

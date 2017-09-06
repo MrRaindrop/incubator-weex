@@ -50,6 +50,8 @@ function warnProcessStyle () {
   }
 }
 
+let idCnt = 0
+
 export default {
   beforeCreate () {
     if (!lazyloadWatched) {
@@ -58,9 +60,15 @@ export default {
   },
 
   mounted () {
-    if (!weex._root) {
-      weex._root = this.$root.$el
-      weex._root.classList.add('weex-root')
+    if (this === this.$root) {
+      const rootId = `wx-root-${idCnt++}`
+      if (!weex._root) {
+        weex._root = {}
+      }
+      weex._root[rootId] = this
+      const el = this.$el
+      el.classList.add('weex-root')
+      el.setAttribute('data-wx-root-id', rootId)
     }
 
     // give warning for not using $processStyle in vue-loader config.

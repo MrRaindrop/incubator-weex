@@ -42,7 +42,6 @@ function getDiv (weex) {
           'weex-type': 'div',
           'data-weex-id': id
         },
-        on: createEventMap(context),
         staticClass: 'weex-div weex-ct',
         staticStyle: extractComponentStyle(context, { functional, id })
       }, trimTextVNodes(context.children))

@@ -223,13 +223,14 @@ function getStyle (vnode, extract, functional) {
 export function getComponentStyle (context, extract, options) {
   let style = {}
   const { functional, id } = options || {}
-  let vnode = functional ? context : context.$vnode
+  const vnode = functional ? context : context.$vnode
+  let tmpVnode = vnode
   const vm = functional ? context.parent : context
   extend(style, getStyle(vnode, extract, functional))
-  vnode = functional ? vnode.parent.$vnode : vnode.parent
-  while (vnode) {
-    extend(style, getStyle(vnode, extract))
-    vnode = vnode.parent
+  tmpVnode = functional ? tmpVnode.parent.$vnode : tmpVnode.parent
+  while (tmpVnode) {
+    extend(style, getStyle(tmpVnode, extract))
+    tmpVnode = tmpVnode.parent
   }
   style = autoPrefix(style)
 
@@ -263,6 +264,27 @@ export function getComponentStyle (context, extract, options) {
       })
       if (k !== 'position') { delete style[k] }
     }
+  }
+
+  /**
+   * bind attrs to $el.
+   */
+  if (functional) {
+    vm.$nextTick(function () {
+      const el = getEl(context, id)
+      if (!el) { return }
+      const attrs = extend({}, vnode.data && vnode.data.attrs)
+      extend(attrs, vnode.props)
+      let tmpVnode = vnode.parent.$vnode
+      let i, j
+      while (tmpVnode) {
+        extend(attrs,
+          (i = tmpVnode.data) && i.attrs,
+          (j = tmpVnode.componentOptions) && j.propsData)
+        tmpVnode = tmpVnode.parent
+      }
+      el.attrs = attrs
+    })
   }
 
   /**
