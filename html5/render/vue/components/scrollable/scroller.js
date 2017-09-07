@@ -61,7 +61,7 @@ function getScroller (weex) {
       createChildren (h) {
         const slots = this.$slots.default || []
         this._cells = slots.filter(vnode => {
-          if (!vnode.tag || !vnode.componentOptions) return false
+          if (!vnode.tag) return false
           return true
         })
         return [

@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { watchAppear, extend } from '../utils'
 
 const _css = `
 body > .weex-div {
@@ -37,14 +38,20 @@ function getDiv (weex) {
     name: 'weex-div',
     render (createElement, context) {
       const id = `wx-div-${idCount++}`
-      return createElement('html:div', {
+      context.parent.$nextTick(function () {
+        watchAppear(context, {
+          functional,
+          id
+        }, true)
+      })
+      return createElement('html:div', extend({}, context.data, {
         attrs: {
           'weex-type': 'div',
           'data-weex-id': id
         },
         staticClass: 'weex-div weex-ct',
         staticStyle: extractComponentStyle(context, { functional, id })
-      }, trimTextVNodes(context.children))
+      }), trimTextVNodes(context.children))
     },
     _css
   }

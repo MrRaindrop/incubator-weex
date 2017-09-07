@@ -95,7 +95,7 @@ function getWaterfall (weex) {
         this._headers = []
         this._others = []
         this._cells = slots.filter(vnode => {
-          if (!vnode.tag || !vnode.componentOptions) return false
+          if (!vnode.tag) return false
           const tag = vnode.componentOptions.tag
           if (tag === 'refresh' || tag === 'loading') {
             this[`_${tag}`] = vnode

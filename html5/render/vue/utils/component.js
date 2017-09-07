@@ -20,20 +20,22 @@ import { throttle, extend } from './func'
 import { createEvent } from './event'
 import config from '../config'
 
-export function getParentScroller (vm) {
+export function getParentScroller (context, functional) {
+  const vm = functional ? context.parent : context
   if (!vm) return null
   if (vm._parentScroller) {
     return vm._parentScroller
   }
   function _getParentScroller (parent) {
-    if (!parent) { return }
-    if (config.scrollableTypes.indexOf(parent.weexType) > -1) {
+    if (!parent || !parent.$el) { return }
+    if (config.scrollableTypes.indexOf(parent.$el.getAttribute('weex-type')) > -1) {
       vm._parentScroller = parent
       return parent
     }
     return _getParentScroller(parent.$parent)
   }
-  return _getParentScroller(vm.$parent)
+  const parentVm = functional ? vm : vm.$parent
+  return _getParentScroller(parentVm)
 }
 
 export function hasIntersection (rect, ctRect) {
@@ -96,8 +98,12 @@ function triggerEvent (elm, handlers, isShow, dir) {
  * get all event listeners. including bound handlers in all parent vnodes.
  */
 export function getEventHandlers (context) {
-  let vnode = context.$vnode
   const handlers = {}
+  if (context.listeners) {  // functional context
+    return context.listeners
+  }
+  let vnode = context.$vnode
+  if (!vnode) { return handlers }
   const attachedVnodes = []
   while (vnode) {
     attachedVnodes.push(vnode)
@@ -115,18 +121,30 @@ export function getEventHandlers (context) {
  * Watch element's visibility to tell whether should trigger a appear/disappear
  * event in scroll handler.
  */
-export function watchAppear (context) {
-  const el = context && context.$el
-  if (!el) { return }
+export function watchAppear (context, options, fireNow) {
+  const { functional, id } = options || {}
+  const { listeners } = context
 
-  const handlers = getEventHandlers(context)
+  function getEl (context, id) {
+    return context && context.$el
+      // get functional element.
+      || id && document.querySelector(`[data-weex-id="${id}"]`)
+  }
+
+  const el = getEl(context, id)
+  if (!el) {
+    return
+  }
+  functional && (context._elm = el)
+
+  const handlers = functional ? listeners : getEventHandlers(context)
   if (!handlers.appear && !handlers.disappear) {
     return
   }
 
   let isWindow = false
-  let container = window
-  const scroller = getParentScroller(context)
+  let container = document.body
+  const scroller = getParentScroller(context, functional)
   if (scroller && scroller.$el) {
     container = scroller.$el
   }
@@ -134,39 +152,47 @@ export function watchAppear (context) {
     isWindow = true
   }
 
+  // If fireNow, then test appear/disappear immediately.
+  if (fireNow) {
+    const visible = isElementVisible(el, container)
+    detectAppear(context, visible)
+  }
+
   // add current vm to the container's appear watch list.
   if (!container._watchAppearList) {
     container._watchAppearList = []
   }
   container._watchAppearList.push(context)
-  if (container._scrollWatched) { return }
 
-  /**
-   * Code below will only exec once for binding scroll handler for parent container.
-   */
-  container._scrollWatched = true
-  const scrollHandler = throttle(event => {
+  if (!container._scrollWatched) {
     /**
-     * detect scrolling direction.
-     * direction only support up & down yet.
-     * TODO: direction support left & right.
+     * Code below will only exec once for binding scroll handler for
+     * parent container.
      */
-    const scrollTop = isWindow ? window.pageYOffset : container.scrollTop
-    const preTop = container._lastScrollTop
-    container._lastScrollTop = scrollTop
-    const dir = scrollTop < preTop
-      ? 'down' : scrollTop > preTop
-      ? 'up' : null
+    container._scrollWatched = true
+    const scrollHandler = throttle(event => {
+      /**
+       * detect scrolling direction.
+       * direction only support up & down yet.
+       * TODO: direction support left & right.
+       */
+      const scrollTop = isWindow ? window.pageYOffset : container.scrollTop
+      const preTop = container._lastScrollTop
+      container._lastScrollTop = scrollTop
+      const dir = scrollTop < preTop
+        ? 'down' : scrollTop > preTop
+        ? 'up' : null
 
-    const watchAppearList = container._watchAppearList || []
-    const len = watchAppearList.length
-    for (let i = 0; i < len; i++) {
-      const vm = watchAppearList[i]
-      const visible = isElementVisible(vm.$el, isWindow ? document.body : container)
-      detectAppear(vm, visible, dir)
-    }
-  }, 25, true)
-  container.addEventListener('scroll', scrollHandler, false)
+      const watchAppearList = container._watchAppearList || []
+      const len = watchAppearList.length
+      for (let i = 0; i < len; i++) {
+        const ctx = watchAppearList[i]
+        const visible = isElementVisible(ctx.$el || ctx._elm, container)
+        detectAppear(ctx, visible, dir)
+      }
+    }, 25, true)
+    container.addEventListener('scroll', scrollHandler, false)
+  }
 }
 
 /**
@@ -199,7 +225,7 @@ export function triggerDisappear (context) {
  * @param {string} dir
  */
 export function detectAppear (context, visible, dir = null) {
-  const el = context && context.$el
+  const el = context && (context.$el || context._elm)
   if (!el) { return }
   const handlers = getEventHandlers(context)
   /**
