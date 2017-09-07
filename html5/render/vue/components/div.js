@@ -16,8 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { watchAppear, extend } from '../utils'
-
 const _css = `
 body > .weex-div {
   min-height: 100%;
@@ -32,6 +30,10 @@ function getDiv (weex) {
     extractComponentStyle,
     trimTextVNodes
   } = weex
+  const {
+    watchAppear,
+    extend
+  } = weex.utils
 
   return {
     functional,
