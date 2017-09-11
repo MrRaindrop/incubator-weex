@@ -81,6 +81,9 @@ function _init (doc) {
       let vm = el.__vue__
       let disposed = false
       let evtName = e.type
+      if (!vm) {  // not a vue component.
+        return
+      }
       /**
        * take full control of redirection of <a> element.
        */
@@ -140,7 +143,8 @@ function _init (doc) {
           }
           else if (href) {
             location.href = href
-          } else if (process.env.NODE_ENV === 'development') {
+          }
+          else if (process.env.NODE_ENV === 'development') {
             console.warn('[vue-render] If you want to use the A tag jump, set the href attribute')
           }
         }
