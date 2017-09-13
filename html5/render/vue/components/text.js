@@ -54,11 +54,8 @@ function getTextSpecStyle (ms = {}) {
 let idCount = 0
 
 function getText (weex) {
-  const {
-    extractComponentStyle,
-    setFunctionalContextToDomElement
-  } = weex
-  const { extend } = weex.utils
+  const { extractComponentStyle } = weex
+  const { extend, watchAppear } = weex.utils
   const functional = true
 
   return {
@@ -71,7 +68,10 @@ function getText (weex) {
 
     render (createElement, context) {
       const id = `wx-text-${idCount++}`
-      setFunctionalContextToDomElement(context, id)
+      context._funcional = true
+      context._id = id
+      weex._functionalContext[id] = context
+      watchAppear(context, { nextTick: true }, true)
       const style = extractComponentStyle(context, { functional, id })
       const textSpecStyle = getTextSpecStyle(style)
       const data = extend({}, context.data, {

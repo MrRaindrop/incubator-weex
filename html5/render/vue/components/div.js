@@ -28,11 +28,11 @@ const functional = true
 function getDiv (weex) {
   const {
     extractComponentStyle,
-    setFunctionalContextToDomElement,
     trimTextVNodes
   } = weex
   const {
-    extend
+    extend,
+    watchAppear
   } = weex.utils
 
   return {
@@ -40,7 +40,10 @@ function getDiv (weex) {
     name: 'weex-div',
     render (createElement, context) {
       const id = `wx-div-${idCount++}`
-      setFunctionalContextToDomElement(context, id)
+      context._funcional = true
+      context._id = id
+      watchAppear(context, { nextTick: true }, true)
+      weex._functionalContext[id] = context
       const data = extend({}, context.data, {
         attrs: {
           'weex-type': 'div',

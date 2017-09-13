@@ -64,10 +64,22 @@ function getListeners (vnode, evt) {
  */
 function getClosestContextOnDomElement (elm) {
   let el = elm && elm.parentElement
-  while (el && el !== document.body && !el.__vue__) {
+  while (el && el !== document.body) {
+    let domCtx = el.__vue__
+    let ctx
+    if (!domCtx) {
+      ctx = weex._functionalContext[el.getAttribute('data-weex-id')]
+      if (ctx) {
+        domCtx = ctx
+        el.__vue__ = domCtx
+        domCtx._elm = el
+      }
+    }
+    if (domCtx) {
+      return domCtx
+    }
     el = el.parentElement
   }
-  return el && el.__vue__
 }
 
 let _inited = false

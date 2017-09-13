@@ -34,6 +34,7 @@ const weex = {
   },
 
   _components: {},
+  _functionalContext: {},
 
   document: {
     body: {}

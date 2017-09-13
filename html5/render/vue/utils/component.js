@@ -117,25 +117,35 @@ export function getEventHandlers (context) {
   return handlers
 }
 
+function getEl (context, functional) {
+  let el
+  if (functional) {
+    el = context._elm
+    if (!el) {
+      el = document.querySelector(`[data-weex-id="${context.id}"]`)
+      context._elm = el
+    }
+  }
+  else {
+    el = context && context.$el
+  }
+  return el
+}
+
 /**
  * Watch element's visibility to tell whether should trigger a appear/disappear
  * event in scroll handler.
  */
 export function watchAppear (context, options, fireNow) {
-  const { functional, id } = options || {}
-  const { listeners } = context
+  const { nextTick } = options || {}
+  const { listeners, _functional: functional } = context
 
-  function getEl (context, id) {
-    return context && context.$el
-      // get functional element.
-      || id && document.querySelector(`[data-weex-id="${id}"]`)
+  if (nextTick) {
+    delete options.nextTick
+    return weex.__vue__.nextTick(function () {
+      watchAppear(context, options, fireNow)
+    })
   }
-
-  const el = getEl(context, id)
-  if (!el) {
-    return
-  }
-  functional && (context._elm = el)
 
   const handlers = functional ? listeners : getEventHandlers(context)
   if (!handlers.appear && !handlers.disappear) {
@@ -154,6 +164,7 @@ export function watchAppear (context, options, fireNow) {
 
   // If fireNow, then test appear/disappear immediately.
   if (fireNow) {
+    const el = getEl(context, functional)
     const visible = isElementVisible(el, container)
     detectAppear(context, visible)
   }
@@ -187,7 +198,7 @@ export function watchAppear (context, options, fireNow) {
       const len = watchAppearList.length
       for (let i = 0; i < len; i++) {
         const ctx = watchAppearList[i]
-        const visible = isElementVisible(ctx.$el || ctx._elm, container)
+        const visible = isElementVisible(getEl(ctx), container)
         detectAppear(ctx, visible, dir)
       }
     }, 25, true)

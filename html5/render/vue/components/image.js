@@ -18,8 +18,8 @@
  */
 
 let extractComponentStyle,
-  setFunctionalContextToDomElement,
-  extend
+  extend,
+  watchAppear
 
 const IMG_NAME_BITS = 15
 
@@ -128,7 +128,11 @@ const image = {
   render (createElement, context) {
     const { src, placeholder } = context.props || {}
     const id = `wx-image-${idCount++}`
-    setFunctionalContextToDomElement(context, id, function () {
+    context._funcional = true
+    context._id = id
+    weex._functionalContext[id] = context
+    watchAppear(context, { nextTick: true }, true)
+    weex.__vue__.nextTick(function () {
       context.parent._fireLazyload()
     })
     const resizeStyle = getResizeStyle(context, functional)
@@ -152,8 +156,8 @@ const image = {
 export default {
   init (weex) {
     extractComponentStyle = weex.extractComponentStyle
-    setFunctionalContextToDomElement = weex.setFunctionalContextToDomElement
     extend = weex.utils.extend
+    watchAppear = weex.utils.watchAppear
 
     weex.registerComponent('image', image)
     weex.registerComponent('img', image)
