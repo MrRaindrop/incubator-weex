@@ -29,6 +29,7 @@ weex._styleMap = {}
 ; ['getComponentStyle',
   'extractComponentStyle',
   'createEventMap',
+  'setFunctionalContextToDomElement',
   'trimTextVNodes'].forEach(function (method) {
     weex[method] = core[method].bind(weex)
   })

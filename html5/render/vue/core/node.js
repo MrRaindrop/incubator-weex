@@ -17,7 +17,30 @@
  * under the License.
  */
 
-import { isArray } from '../utils'
+import {
+  isArray,
+  watchAppear
+} from '../utils'
+
+/**
+ * set __vue__ to functional component's dom element in next tick.
+ * @param {Object} context - functional context
+ * @param {string} id - dom element's id for functional component.
+ */
+export function setFunctionalContextToDomElement (context, id, callback) {
+  context.parent.$nextTick(function () {
+    // set element's __vue__
+    context._functional = true
+    const elm = document.querySelector(`[data-weex-id=${id}]`)
+    context._elm = elm
+    elm.__vue__ = context
+    watchAppear(context, {
+      functional: true,
+      id
+    }, true)
+    callback && callback()
+  })
+}
 
 /**
  * remove text nodes in the nodes array.

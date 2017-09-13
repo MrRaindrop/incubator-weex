@@ -28,10 +28,10 @@ const functional = true
 function getDiv (weex) {
   const {
     extractComponentStyle,
+    setFunctionalContextToDomElement,
     trimTextVNodes
   } = weex
   const {
-    watchAppear,
     extend
   } = weex.utils
 
@@ -40,20 +40,17 @@ function getDiv (weex) {
     name: 'weex-div',
     render (createElement, context) {
       const id = `wx-div-${idCount++}`
-      context.parent.$nextTick(function () {
-        watchAppear(context, {
-          functional,
-          id
-        }, true)
-      })
-      return createElement('html:div', extend({}, context.data, {
+      setFunctionalContextToDomElement(context, id)
+      const data = extend({}, context.data, {
         attrs: {
           'weex-type': 'div',
           'data-weex-id': id
         },
         staticClass: 'weex-div weex-ct',
         staticStyle: extractComponentStyle(context, { functional, id })
-      }), trimTextVNodes(context.children))
+      })
+      delete data.on
+      return createElement('html:div', data, trimTextVNodes(context.children))
     },
     _css
   }

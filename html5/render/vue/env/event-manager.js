@@ -23,9 +23,10 @@ import { applyFns } from '../core'
 
 const gestureEvents = config.gestureEvents
 const nativeEvents = ['click', 'touchstart', 'touchmove', 'touchend']
+const imageEvents = ['load', 'error']
 const needPassive = ['touchmove']
 
-const events = gestureEvents.concat(nativeEvents)
+const events = gestureEvents.concat(nativeEvents).concat(imageEvents)
 
 /**
  * if el is a `<a>` element.
@@ -57,6 +58,18 @@ function getListeners (vnode, evt) {
   return handlers
 }
 
+/**
+ * get closest parent context which has a __vue__ on the dom element.
+ * @param {HTMLElement} elm - element.
+ */
+function getClosestContextOnDomElement (elm) {
+  let el = elm && elm.parentElement
+  while (el && el !== document.body && !el.__vue__) {
+    el = el.parentElement
+  }
+  return el && el.__vue__
+}
+
 let _inited = false
 function _init (doc) {
   if (_inited) {
@@ -78,18 +91,18 @@ function _init (doc) {
       ? { passive: true } : false
     doc.addEventListener(evt, function (e) {
       const el = e.target
-      let vm = el.__vue__
-      let disposed = false
-      let evtName = e.type
-      if (!vm) {  // not a vue component.
+      let ctx = el.__vue__ || getClosestContextOnDomElement(el)
+      if (!ctx) {  // not a vue component.
         return
       }
+      let disposed = false
+      let evtName = e.type
       /**
        * take full control of redirection of <a> element.
        */
       if (evtName === 'click') {
         // use '_triggered' to control bubbles event.
-        e._triggered = { target: vm.$el }
+        e._triggered = { target: ctx.$el || ctx._elm }
         e.preventDefault()
         return
       }
@@ -101,10 +114,14 @@ function _init (doc) {
         evtName = 'click'
       }
 
-      while (vm) {
-        const vnode = vm._vnode || vm.$vnode
-        const elm = vm.$el
-        const ons = getListeners(vnode, evtName)
+      while (ctx) {
+        const functional = !!ctx._functional
+        const vnode = ctx._vnode || ctx.$vnode
+        const elm = functional ? ctx._elm : ctx.$el
+        let ons = functional
+          ? ctx.listeners && ctx.listeners[evtName]
+          : getListeners(vnode, evtName)
+        if (typeof ons === 'function') { ons = [ons] }
         const len = ons && ons.length
 
         if (len > 0) {
@@ -113,9 +130,9 @@ function _init (doc) {
             const newEvt = evtName === 'click'
               ? createEvent(el, evtName)
               : e
-            applyFns(handler.fns, newEvt)
+            applyFns(handler.fns || handler, newEvt)
           }
-          e._triggered = { target: vm.$el }
+          e._triggered = { target: elm }
           disposed = true
         }
 
@@ -152,7 +169,10 @@ function _init (doc) {
         if (disposed) {
           return
         }
-        vm = vm.$parent
+
+        ctx = functional
+          ? getClosestContextOnDomElement(ctx._elm)
+          : ctx.$parent
       }
     }, option)
   })

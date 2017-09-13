@@ -17,7 +17,9 @@
  * under the License.
  */
 
-let extractComponentStyle, createEventMap, extend
+let extractComponentStyle,
+  setFunctionalContextToDomElement,
+  extend
 
 const IMG_NAME_BITS = 15
 
@@ -27,30 +29,35 @@ const _css = `
   background-position: 50% 50%;
 }
 `
+
+let idCount = 0
+
 /**
  * get resize (stetch|cover|contain) related styles.
  */
-function getResizeStyle (context) {
+function getResizeStyle (context, functional) {
   const stretch = '100% 100%'
-  const resize = context.resize || stretch
+  const resize = (functional ? context.props.resize : context.resize) || stretch
   const bgSize = ['cover', 'contain', stretch].indexOf(resize) > -1 ? resize : stretch
   // compatibility: http://caniuse.com/#search=background-size
   return { 'background-size': bgSize }
 }
 
-function preProcessSrc (context, url, mergedStyle) {
+function preProcessSrc (context, url, mergedStyle, functional) {
   // somehow the merged style in _prerender hook is gone.
   // just return the original src.
   if (!mergedStyle || !mergedStyle.width || !mergedStyle.height) {
     return url
   }
+  const props = functional ? context.props || {} : context
   const { width, height } = mergedStyle
-  return context.processImgSrc && context.processImgSrc(url, {
+  const vm = functional ? context.parent : context
+  return vm.processImgSrc && vm.processImgSrc(url, {
     width: parseFloat(width),
     height: parseFloat(height),
-    quality: context.quality,
-    sharpen: context.sharpen,
-    original: context.original
+    quality: props.quality,
+    sharpen: props.sharpen,
+    original: props.original
   }) || url
 }
 
@@ -99,8 +106,10 @@ function download (url, callback) {
   }
 }
 
+const functional = true
 const image = {
   name: 'weex-image',
+  functional,
   props: {
     src: String,
     placeholder: String,
@@ -110,33 +119,32 @@ const image = {
     original: [String, Boolean]
   },
 
-  updated () {
-    this._fireLazyload()
-  },
-
-  mounted () {
-    this._fireLazyload()
-  },
-
   methods: {
     save (callback) {
       download(this.src, callback)
     }
   },
 
-  render (createElement) {
-    const resizeStyle = getResizeStyle(this)
-    const style = extractComponentStyle(this)
-    return createElement('figure', {
+  render (createElement, context) {
+    const { src, placeholder } = context.props || {}
+    const id = `wx-image-${idCount++}`
+    setFunctionalContextToDomElement(context, id, function () {
+      context.parent._fireLazyload()
+    })
+    const resizeStyle = getResizeStyle(context, functional)
+    const style = extractComponentStyle(context, { functional, id })
+    const data = extend({}, context.data, {
       attrs: {
         'weex-type': 'image',
-        'img-src': preProcessSrc(this, this.src, style),
-        'img-placeholder': preProcessSrc(this, this.placeholder, style)
+        'data-weex-id': id,
+        'img-src': preProcessSrc(context, src, style, functional),
+        'img-placeholder': preProcessSrc(context, placeholder, style, functional)
       },
-      on: createEventMap(this, ['load', 'error']),
       staticClass: 'weex-image weex-el',
       staticStyle: extend(style, resizeStyle)
     })
+    delete data.on
+    return createElement('figure', data)
   },
   _css
 }
@@ -144,7 +152,7 @@ const image = {
 export default {
   init (weex) {
     extractComponentStyle = weex.extractComponentStyle
-    createEventMap = weex.createEventMap
+    setFunctionalContextToDomElement = weex.setFunctionalContextToDomElement
     extend = weex.utils.extend
 
     weex.registerComponent('image', image)

@@ -24,7 +24,6 @@
  * if the computed value of 'height' is bigger than 'lines', than the text will
  * be clipped according to the 'lines'. Otherwise, it'll be the 'height'.
  */
-
 const _css = `
 .weex-text {
   display: -webkit-box;
@@ -52,26 +51,39 @@ function getTextSpecStyle (ms = {}) {
   }
 }
 
+let idCount = 0
+
 function getText (weex) {
-  const { extractComponentStyle, createEventMap } = weex
+  const {
+    extractComponentStyle,
+    setFunctionalContextToDomElement
+  } = weex
   const { extend } = weex.utils
+  const functional = true
 
   return {
     name: 'weex-text',
+    functional,
     props: {
       lines: [Number, String],
       value: [String]
     },
 
-    render (createElement) {
-      const style = extractComponentStyle(this)
+    render (createElement, context) {
+      const id = `wx-text-${idCount++}`
+      setFunctionalContextToDomElement(context, id)
+      const style = extractComponentStyle(context, { functional, id })
       const textSpecStyle = getTextSpecStyle(style)
-      return createElement('p', {
-        attrs: { 'weex-type': 'text' },
-        on: createEventMap(this),
+      const data = extend({}, context.data, {
+        attrs: {
+          'weex-type': 'text',
+          'data-weex-id': id
+        },
         staticClass: 'weex-text weex-el',
         staticStyle: extend(style, textSpecStyle)
-      }, this.$slots.default || [this.value])
+      })
+      delete data.on
+      return createElement('html:p', data, context.children || [this.value])
     },
     _css
   }

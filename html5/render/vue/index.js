@@ -45,6 +45,15 @@ function init (Vue/*, options = {}*/) {
   Vue.config.isReservedTag = tag => htmlRegex.test(tag)
   Vue.config.parsePlatformTagName = tag => tag.replace(htmlRegex, '')
 
+  const nullNsTags = ['text', 'image']
+  const oldGetTagNamespace = Vue.config.getTagNamespace.bind(Vue.config)
+  Vue.config.getTagNamespace = function (tag) {
+    if (nullNsTags.indexOf(tag) > -1) {
+      return
+    }
+    return oldGetTagNamespace(tag)
+  }
+
   Vue.mixin(base)
   Vue.mixin(style)
   Vue.mixin(sticky)
