@@ -63,7 +63,7 @@ function getListeners (vnode, evt) {
  * @param {HTMLElement} elm - element.
  */
 function getClosestContextOnDomElement (elm) {
-  let el = elm && elm.parentElement
+  let el = elm
   while (el && el !== document.body) {
     let domCtx = el.__vue__
     let ctx

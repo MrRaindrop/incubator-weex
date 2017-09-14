@@ -128,7 +128,7 @@ const image = {
   render (createElement, context) {
     const { src, placeholder } = context.props || {}
     const id = `wx-image-${idCount++}`
-    context._funcional = true
+    context._functional = true
     context._id = id
     weex._functionalContext[id] = context
     watchAppear(context, { nextTick: true }, true)

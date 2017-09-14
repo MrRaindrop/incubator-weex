@@ -68,7 +68,7 @@ function getText (weex) {
 
     render (createElement, context) {
       const id = `wx-text-${idCount++}`
-      context._funcional = true
+      context._functional = true
       context._id = id
       weex._functionalContext[id] = context
       watchAppear(context, { nextTick: true }, true)
@@ -83,7 +83,7 @@ function getText (weex) {
         staticStyle: extend(style, textSpecStyle)
       })
       delete data.on
-      return createElement('html:p', data, context.children || [this.value])
+      return createElement('html:p', data, context.children || [context.props && context.props.value])
     },
     _css
   }

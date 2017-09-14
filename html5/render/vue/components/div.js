@@ -40,7 +40,7 @@ function getDiv (weex) {
     name: 'weex-div',
     render (createElement, context) {
       const id = `wx-div-${idCount++}`
-      context._funcional = true
+      context._functional = true
       context._id = id
       watchAppear(context, { nextTick: true }, true)
       weex._functionalContext[id] = context

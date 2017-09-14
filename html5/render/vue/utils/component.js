@@ -122,8 +122,9 @@ function getEl (context, functional) {
   if (functional) {
     el = context._elm
     if (!el) {
-      el = document.querySelector(`[data-weex-id="${context.id}"]`)
+      el = document.querySelector(`[data-weex-id="${context._id}"]`)
       context._elm = el
+      el.__vue__ = context
     }
   }
   else {
@@ -249,12 +250,12 @@ export function detectAppear (context, visible, dir = null) {
    * if the component hasn't appeared for once yet, then it shouldn't trigger
    * a disappear event at all.
    */
-  if (!visible && !context._appearedOnce) { return }
-  if (!context._visible === visible) {
-    if (!context._appearedOnce) {
-      context._appearedOnce = true
+  if (!visible && !el._appearedOnce) { return }
+  if (!el._visible === visible) {
+    if (!el._appearedOnce) {
+      el._appearedOnce = true
     }
-    context._visible = visible
+    el._visible = visible
     triggerEvent(el, handlers, visible, dir)
   }
 }
