@@ -183,7 +183,7 @@ function _init (doc) {
         }
 
         ctx = functional
-          ? getClosestContextOnDomElement(ctx._elm)
+          ? getClosestContextOnDomElement(ctx._elm.parentElement)
           : ctx.$parent
       }
     }, option)
