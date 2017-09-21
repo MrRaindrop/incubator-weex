@@ -19,6 +19,7 @@
 
 let extractComponentStyle,
   extend,
+  getIdCount,
   watchAppear
 
 const IMG_NAME_BITS = 15
@@ -29,8 +30,6 @@ const _css = `
   background-position: 50% 50%;
 }
 `
-
-let idCount = 0
 
 /**
  * get resize (stetch|cover|contain) related styles.
@@ -127,7 +126,7 @@ const image = {
 
   render (createElement, context) {
     const { src, placeholder } = context.props || {}
-    const id = `wx-image-${idCount++}`
+    const id = `wx-image-${getIdCount('image')}`
     context._functional = true
     context._id = id
     weex._functionalContext[id] = context
@@ -157,6 +156,7 @@ export default {
   init (weex) {
     extractComponentStyle = weex.extractComponentStyle
     extend = weex.utils.extend
+    getIdCount = weex.utils.getIdCount
     watchAppear = weex.utils.watchAppear
 
     weex.registerComponent('image', image)

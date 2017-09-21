@@ -268,3 +268,17 @@ export function toCSSText (object: any) {
   }
   return cssText
 }
+
+const _idCountMap = {
+  anonym: 0
+}
+export function getIdCount (name: string) {
+  if (!name) {
+    name = 'anonym'
+  }
+  const cnt = _idCountMap[name]
+  if (!cnt || cnt >= Number.MAX_SAFE_INTEGER) {
+    _idCountMap[name] = 0
+  }
+  return _idCountMap[name]++
+}

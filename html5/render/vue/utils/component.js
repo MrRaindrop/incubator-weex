@@ -20,8 +20,8 @@ import { throttle, extend } from './func'
 import { createEvent } from './event'
 import config from '../config'
 
-export function getParentScroller (context, functional) {
-  const vm = functional ? context.parent : context
+export function getParentScroller (context) {
+  const vm = context
   if (!vm) return null
   if (vm._parentScroller) {
     return vm._parentScroller
@@ -34,8 +34,18 @@ export function getParentScroller (context, functional) {
     }
     return _getParentScroller(parent.$parent)
   }
-  const parentVm = functional ? vm : vm.$parent
+  const parentVm = vm.$parent
   return _getParentScroller(parentVm)
+}
+
+function getParentScrollableContainer (el) {
+  let parent = el.parentElement
+  while (parent && parent !== document.body) {
+    if (config.scrollableTypes.indexOf(parent.getAttribute('weex-type')) > -1) {
+      return parent
+    }
+    parent = parent.parentElement
+  }
 }
 
 export function hasIntersection (rect, ctRect) {
@@ -155,18 +165,27 @@ export function watchAppear (context, options, fireNow) {
 
   let isWindow = false
   let container = document.body
-  const scroller = getParentScroller(context, functional)
-  if (scroller && scroller.$el) {
-    container = scroller.$el
+  let el
+  let scroller
+
+  if (functional) {
+    el = getEl(context, functional)
+    const ct = getParentScrollableContainer(el)
+    ct ? (container = ct) : (isWindow = true)
   }
   else {
-    isWindow = true
+    scroller = getParentScroller(context, functional)
+    if (scroller && scroller.$el) {
+      container = scroller.$el
+    }
+    else {
+      isWindow = true
+    }
   }
 
   // If fireNow, then test appear/disappear immediately.
   if (fireNow) {
-    const el = getEl(context, functional)
-    const visible = isElementVisible(el, container)
+    const visible = isElementVisible(el || getEl(context, functional), container)
     detectAppear(context, visible)
   }
 
@@ -199,7 +218,7 @@ export function watchAppear (context, options, fireNow) {
       const len = watchAppearList.length
       for (let i = 0; i < len; i++) {
         const ctx = watchAppearList[i]
-        const visible = isElementVisible(getEl(ctx), container)
+        const visible = isElementVisible(getEl(ctx, ctx._functional), container)
         detectAppear(ctx, visible, dir)
       }
     }, 25, true)

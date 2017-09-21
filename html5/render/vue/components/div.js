@@ -22,7 +22,6 @@ body > .weex-div {
 }
 `
 
-let idCount = 0
 const functional = true
 
 function getDiv (weex) {
@@ -32,6 +31,7 @@ function getDiv (weex) {
   } = weex
   const {
     extend,
+    getIdCount,
     watchAppear
   } = weex.utils
 
@@ -39,7 +39,7 @@ function getDiv (weex) {
     functional,
     name: 'weex-div',
     render (createElement, context) {
-      const id = `wx-div-${idCount++}`
+      const id = `wx-div-${getIdCount('div')}`
       context._functional = true
       context._id = id
       watchAppear(context, { nextTick: true }, true)
