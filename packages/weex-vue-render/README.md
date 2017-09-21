@@ -151,6 +151,27 @@ vue: {
 
 * event handling ignore none-vue element.
 
+#### 0.12.10
+
+* fix accessing vm in dom which is not a vue component.
+
+#### 0.12.11
+
+* fix styles in firefox.
+* implement methods about selection range.
+
+#### 0.12.12
+
+* fix NS (svg) bug in vue.js@v2.4.3
+
+#### 0.12.13
+
+* reset `env.deviceHeight` after window's resizing.
+
+#### 0.12.14
+
+* fix loading & refresh: pulling down wrongly triggered.
+
 ## component -> dom map
 
 | component | dom element | children | note |

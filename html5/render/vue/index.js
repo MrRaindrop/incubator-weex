@@ -45,10 +45,12 @@ function init (Vue/*, options = {}*/) {
   Vue.config.isReservedTag = tag => htmlRegex.test(tag)
   Vue.config.parsePlatformTagName = tag => tag.replace(htmlRegex, '')
 
-  const nullNsTags = ['text', 'image']
-  const oldGetTagNamespace = Vue.config.getTagNamespace.bind(Vue.config)
+  function isWeexTag (tag) {
+    return !!weex._components[tag]
+  }
+  const oldGetTagNamespace = Vue.config.getTagNamespace
   Vue.config.getTagNamespace = function (tag) {
-    if (nullNsTags.indexOf(tag) > -1) {
+    if (isWeexTag(tag)) {
       return
     }
     return oldGetTagNamespace(tag)
